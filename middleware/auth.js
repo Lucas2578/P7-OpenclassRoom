@@ -11,8 +11,10 @@ module.exports = (req, res, next) => {
         // On ajoute à la requête (req) une info qui dit qui est connecté, en l'occurrence, son identifiant (userId)
         req.auth = {
             userId: userId
-        };
+        }
+        next();
     } catch(error) {
         res.status(401).json({ error });
     }
+    console.log('cc ça marche');
 }

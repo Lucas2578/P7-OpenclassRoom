@@ -1,7 +1,9 @@
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 
 const userRoutes = require('./routes/user');
+const bookRoutes = require('./routes/books');
 
 // Connecte l'application à la base de données MongoDB
 mongoose.connect('mongodb+srv://Lucas:Rda6ZDgUlrvgu7kC@cluster0.g4bmxef.mongodb.net/?retryWrites=true&w=majority',
@@ -23,6 +25,9 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 app.use('/api/auth', userRoutes);
+app.use('/api/books', bookRoutes);
 
 module.exports = app;
