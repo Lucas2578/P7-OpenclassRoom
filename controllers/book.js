@@ -9,7 +9,7 @@ exports.createBook = (req, res, next) => {
         ...bookObject,
         userId: req.auth.userId,
         imageUrl: `${req.protocol}://${req.get('host')}/images/resized_${req.file.filename}`,
-        averageRating: bookObject.ratings[0].grade
+        averageRating: bookObject.ratings[0].grade,
     });
 
     book.save()
@@ -30,9 +30,18 @@ exports.getAllBook = (req, res, next) => {
 }
 
 exports.deleteBook = (req, res, next) => {
-    Thing.deleteOne({ _id: req.params.id })
-    .then(() => res.status(200).json({ message: 'Objet supprimé !'}))
-    .catch(error => res.status(400).json({ error }));
+    Book.findOne({ _id: req.params.id })
+        .then(book => {
+            const fileName = book.imageUrl.split('/images/')[1];
+            fs.unlink(`images/${fileName}`, () => {
+                Book.deleteOne({ _id: req.params.id })
+                    .then(() => { res.status(200).json({ message: 'Objet supprimé !' }) })
+                    .catch(error => res.status(400).json({ error }));
+            })
+        })
+        .catch( error => {
+            res.status(404).json({ error });
+        })
 }
 
 exports.modifyBook = (req, res, next) => {
@@ -53,4 +62,33 @@ exports.modifyBook = (req, res, next) => {
         .catch(error => {
             res.status(400).json({ error });
         });
+};
+
+exports.rateBook = (req, res, next) => {
+    // On initialise deux constantes pour récupérer l'id du livre et de l'utilisateur
+    const userId = req.auth.userId;
+    const bookId = req.params.id;
+
+    Book.findOne({ _id: bookId })
+        .then( book => {
+            // On initialise une constante qui renvoie soit "false" soit "true" pour savoir si le livre a déjà été noté
+            const isAlreadyRated = book.ratings.find((book) => book.userId === userId);
+              if ( !isAlreadyRated) {
+                // Si ça renvoie "false", on ajoute la note avec l'userId qui vient de noter
+                book.ratings.push({ userId: req.auth.userId, grade: req.body.rating })
+                // Méthode de calcul de moyenne de note
+                const ratings = book.ratings.map(rating => rating.grade);
+                const newAverageRating = ratings.reduce((total, current) => total + current, 0) / ratings.length;
+                // On remplace l'ancienne moyenne par la nouvelle
+                book.averageRating = newAverageRating;
+    
+                // On sauvegarde dans la db
+                return book.save()
+                } else {
+                    res.status(401).json({message: 'Vous avez déjà noté ce livre !'});
+                }
+            })
+        // Met à jour la réponse HTTP pour le client
+        .then(book => res.status(201).json(book))
+        .catch(error => res.status(500).json({ error }));
 };

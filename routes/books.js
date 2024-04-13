@@ -11,6 +11,6 @@ router.get('/bestrating');
 router.post('/', auth, upload, upload.resizeAndReplaceImage, bookCtrl.createBook);
 router.put('/:id', auth, upload, upload.resizeAndReplaceImage, bookCtrl.modifyBook);
 router.delete('/:id', auth, bookCtrl.deleteBook);
-router.post('/:id/rating', auth);
+router.post('/:id/rating', auth, bookCtrl.rateBook);
 
 module.exports = router;

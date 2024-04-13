@@ -4,9 +4,11 @@ const mongoose = require('mongoose');
 
 const userRoutes = require('./routes/user');
 const bookRoutes = require('./routes/books');
+// On importe les informations de connexion
+const { user, password } = require('./utils/credentials');
 
 // Connecte l'application à la base de données MongoDB
-mongoose.connect('mongodb+srv://Lucas:Rda6ZDgUlrvgu7kC@cluster0.g4bmxef.mongodb.net/?retryWrites=true&w=majority',
+mongoose.connect(`mongodb+srv://${user}:${password}@cluster0.g4bmxef.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
