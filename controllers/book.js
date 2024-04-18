@@ -5,11 +5,14 @@ exports.createBook = (req, res, next) => {
     // On initialise une constante qui comporte le corps de la requête du formulaire book
     // On utilise JSON.parse() pour transformer les données JSON en objet JavaScript
     const bookObject = JSON.parse(req.body.book);
+
     // On supprime le champ _id car MongoDB génère automatiquement un nouvel id unique pour chaque nouveau document
     delete bookObject._id;
+
     // On enlève "_userId" pour éviter que quelqu'un change manuellement qui est le propriétaire du livre
     // On utilise les infos d'authentification pour savoir qui est l'utilisateur actuel
     delete bookObject._userId;
+    
     // On créer un nouvel objet de livre en utilisant bookObject
     const book = new Book({
         // Données ajoutées par l'utilisateur
@@ -127,10 +130,17 @@ exports.rateBook = (req, res, next) => {
                 // On sauvegarde dans la db
                 return book.save()
                 } else {
-                    res.status(401).json({message: 'Vous avez déjà noté ce livre !'});
+                    res.status(401).json({ message: 'Vous avez déjà noté ce livre !' });
                 }
             })
         // Met à jour la réponse HTTP pour le client
         .then(book => res.status(201).json(book))
         .catch(error => res.status(500).json({ error }));
+};
+
+exports.getBestRating = (req, res, next) => {
+    // On récupère tous les livres et on fait un trie descendant (plus grand au plus petit), limité à 3 livres
+    Book.find().sort({ averageRating: -1 }).limit(3)
+        .then(topBooks => res.status(200).json(topBooks))
+        .catch(error => res.status(404).json({ error }));
 };
