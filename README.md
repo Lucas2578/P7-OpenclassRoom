@@ -5,8 +5,8 @@ Ce projet est une application Node.js avec Express pour la gestion de livres. Il
 
 ## Comment lancer le projet
 ### Prérequis
-- Node.js (version X.X.X)
-- npm (version X.X.X)
+- Node.js
+- npm
 - Les packages suivants doivent être installés :
   - bcrypt
   - dotenv
