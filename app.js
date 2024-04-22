@@ -10,11 +10,6 @@ const password = process.env.DATABASE_PASSWORD;
 const cluster = process.env.DATABASE_CLUSTER;
 const db_name = process.env.DATABASE_SERVER;
 
-console.log(user);
-console.log(password);
-console.log(cluster);
-console.log(db_name);
-
 // Connecte l'application à la base de données MongoDB
 mongoose.connect(`mongodb+srv://${user}:${password}@${cluster}.${db_name}.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
