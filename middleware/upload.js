@@ -39,9 +39,6 @@ module.exports.resizeAndReplaceImage = (req, res, next) => {
     const filePath = req.file.path;
     const fileName = req.file.filename;
     const outputFilePath = path.join('images', `resized_${fileName}`);
-    console.log(fileName);
-    console.log(filePath);
-    console.log(outputFilePath);
   
     // On redimensionne l'image et on écrit le fichier redimensionné sur le système de fichiers
     sharp(filePath)
