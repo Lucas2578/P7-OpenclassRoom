@@ -1,3 +1,5 @@
+require('dotenv').config({ path: `.env.local` })
+
 const http = require('http');
 const app = require('./app');
 
