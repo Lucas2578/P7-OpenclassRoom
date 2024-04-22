@@ -139,24 +139,8 @@ exports.rateBook = (req, res, next) => {
 };
 
 exports.getBestRating = (req, res, next) => {
-    Book.find()
-        .then(books => {
-            // Calcul de la moyenne des notations pour chaque livre
-            books.forEach(book => {
-                if (book.ratings.length > 0) {
-                    const totalGrade = book.ratings.reduce((acc, rating) => acc + rating.grade, 0);
-                    book.averageRating = totalGrade / book.ratings.length;
-                } else {
-                    book.averageRating = 0; // Si aucun vote n'est donné, la note moyenne est 0
-                }
-            });
-
-            // Tri des livres par note moyenne (descendante)
-            books.sort((a, b) => b.averageRating - a.averageRating);
-
-            // Limite à 3 livres
-            const topBooks = books.slice(0, 3);
-            res.status(200).json(topBooks);
-        })
+    // On récupère tous les livres et on fait un trie descendant (plus grand au plus petit), limité à 3 livres
+    Book.find().sort({ averageRating: -1 }).limit(3)
+        .then(topBooks => res.status(200).json(topBooks))
         .catch(error => res.status(404).json({ error }));
 };

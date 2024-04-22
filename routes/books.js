@@ -6,9 +6,9 @@ const upload = require('../middleware/upload');
 const bookCtrl = require('../controllers/book');
 
 router.get('/', bookCtrl.getAllBook);
-router.get('/:id', bookCtrl.getOneBook);
 router.get('/bestrating', bookCtrl.getBestRating);
 router.post('/', auth, upload, upload.resizeAndReplaceImage, bookCtrl.createBook);
+router.get('/:id', bookCtrl.getOneBook);
 router.put('/:id', auth, upload, upload.resizeAndReplaceImage, bookCtrl.updateBook);
 router.delete('/:id', auth, bookCtrl.deleteBook);
 router.post('/:id/rating', auth, bookCtrl.rateBook);
