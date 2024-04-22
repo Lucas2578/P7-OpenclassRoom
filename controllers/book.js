@@ -91,7 +91,7 @@ exports.updateBook = (req, res, next) => {
                 return res.status(404).json({ message: 'Livre non trouvé' });
             }
             if (book.userId !== req.auth.userId) {
-                return res.status(403).json({ message: 'Vous n\'êtes pas autorisé à modifier ce livre' });
+                return res.status(403).json({ message: '403: unauthorized request ' });
             }
             // On met à jour le livre avec les nouvelles données envoyées à l'aide du formulaire par l'utilisateur
             Book.updateOne({ _id: bookId }, { ...updateParams, _id: req.params.id })
@@ -100,12 +100,12 @@ exports.updateBook = (req, res, next) => {
                 })
                 .catch(error => {
                     console.error(error);
-                    res.status(500).json({ error: 'Une erreur est survenue lors de la mise à jour du livre' });
+                    res.status(500).json({ error });
                 });
         })
         .catch(error => {
             console.error(error);
-            res.status(500).json({ error: 'Une erreur est survenue lors de la recherche du livre' });
+            res.status(500).json({ error });
         });
 };
 
@@ -117,7 +117,7 @@ exports.rateBook = (req, res, next) => {
     Book.findOne({ _id: bookId })
         .then( book => {
             // On initialise une constante qui renvoie soit "false" soit "true" pour savoir si le livre a déjà été noté
-            const isAlreadyRated = book.ratings.find((book) => book.userId === userId);
+            const isAlreadyRated = book.ratings.some((book) => book.userId === userId);
               if ( !isAlreadyRated) {
                 // Si ça renvoie "false", on ajoute la note avec l'userId qui vient de noter
                 book.ratings.push({ userId: req.auth.userId, grade: req.body.rating })
