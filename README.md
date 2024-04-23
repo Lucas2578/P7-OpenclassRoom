@@ -1,4 +1,4 @@
-# Nom du Projet
+# Mon Vieux Grimoire
 
 ## Description
 Ce projet est une application Node.js avec Express pour la gestion de livres. Il permet aux utilisateurs de créer, lire, mettre à jour et supprimer des livres, ainsi que de noter les livres et de consulter les meilleurs livres en fonction de leur note moyenne.
