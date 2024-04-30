@@ -30,34 +30,44 @@ const storage = multer.diskStorage({
 module.exports = multer({storage: storage}).single('image');
 
 module.exports.resizeAndReplaceImage = (req, res, next) => {
-    // On vérifie si l'image a été téléchargée
+    // On vérifie si une image est dans la requête
     if (!req.file) {
-      return res.status(400).json({ message: 'Ajouter une image est obligatoire !' });
+        return res.status(400).json({ message: 'Ajouter une image est obligatoire !' });
     }
-  
-    // Chemin du fichier téléchargé
-    const filePath = req.file.path;
-    const fileName = req.file.filename;
-    const outputFilePath = path.join('images', `resized_${fileName}`);
-  
-    // On redimensionne l'image et on écrit le fichier redimensionné sur le système de fichiers
-    sharp(filePath)
-      .resize(206, 260)
-      .toFile(outputFilePath)
-        .then(() => {
-            // Ici, on remplace le fichier original par celui redimensionné
-            // fs.unlink est utilisée pour supprimer des fichiers
-            fs.unlink(filePath, (err) => {
-                if (err) {
-                  console.log(err);
-                }
-              // On met à jour le chemin de req.file.path
-              req.file.path = outputFilePath;
-              // On exécute le prochain middleware
-              next();
+
+    // On initialise une constante qui comporte le corps de la requête du formulaire book
+    // On utilise JSON.parse() pour transformer les données JSON en objet JavaScript
+    const bookObject = JSON.parse(req.body.book);
+
+    // Vérification si tous les champs obligatoires sont remplis
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
+        // Si un champ est manquant, on supprime le fichier téléchargé et on retourne une réponse d'erreur
+        fs.unlink(req.file.path, (err) => {
+            if (err) {
+                console.log(err);
+            }
+            return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+        });
+    } else {
+        // Si tous les champs obligatoires sont remplis, procéder au redimensionnement de l'image
+        const filePath = req.file.path;
+        const fileName = req.file.filename;
+        const outputFilePath = path.join('images', `resized_${fileName}`);
+
+        sharp(filePath)
+            .resize(206, 260)
+            .toFile(outputFilePath)
+            .then(() => {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    req.file.path = outputFilePath;
+                    next();
+                });
+            })
+            .catch(err => {
+                return next();
             });
-          })
-          .catch(err => {
-            return next();
-          });
+    }
 };
