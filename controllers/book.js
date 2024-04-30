@@ -6,6 +6,20 @@ exports.createBook = (req, res, next) => {
     // On utilise JSON.parse() pour transformer les données JSON en objet JavaScript
     const bookObject = JSON.parse(req.body.book);
 
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre) {
+        if (req.file) {
+            // Si un champ est manquant, on supprime le fichier téléchargé s'il existe
+            fs.unlink(req.file.path, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+                return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+            });
+        } else {
+            return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+        }
+    }
+
     // On supprime le champ _id car MongoDB génère automatiquement un nouvel id unique pour chaque nouveau document
     delete bookObject._id;
 
@@ -71,10 +85,10 @@ exports.deleteBook = (req, res, next) => {
 exports.updateBook = (req, res, next) => {
     // On récupère l'id du livre en cours d'édition
     const bookId = req.params.id;
-    
+
     // On stock toutes les données du livre modifié
     const bookData = req.body;
-    
+
     // On vérifie ici si une nouvelle image a été upload, on insère la nouvelle image dans la variable imageUrl, sinon la variable reste indéfinie
     let imageUrl;
     if (req.file) {
@@ -82,11 +96,37 @@ exports.updateBook = (req, res, next) => {
     }
 
     // On met à jour les champs du livre avec la requête du formulaire
-    const updateParams = {
-        ...bookData,
-        // Si imageUrl n'est pas définie, on ajoute alors l'url de l'image qui n'a pas été changée dans cette variable
-        imageUrl: imageUrl || bookData.imageUrl
-    };
+    let updateParams;
+    if (req.body.book) {
+        try {
+            updateParams = {
+                ...JSON.parse(req.body.book),
+                // Si imageUrl n'est pas définie, on ajoute alors l'url de l'image qui n'a pas été changée dans cette variable
+                imageUrl: imageUrl || bookData.imageUrl
+            };
+        } catch (error) {
+            return res.status(400).json({ message: "Données du livre invalides." });
+        }
+    } else {
+        updateParams = {
+            ...bookData,
+            // Si imageUrl n'est pas définie, on ajoute alors l'url de l'image qui n'a pas été changée dans cette variable
+            imageUrl: imageUrl || bookData.imageUrl
+        };
+    }
+
+    // On vérifie si tous les champs requis sont présents
+    if (!updateParams.title || !updateParams.author || !updateParams.genre || !updateParams.year) {
+        // Si un champ est manquant et qu'un fichier a été téléchargé, on supprime le fichier
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        }
+        return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+    }
 
     // On cherche le livre en cours d'édition
     Book.findOne({ _id: bookId })

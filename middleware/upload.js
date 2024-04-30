@@ -29,45 +29,54 @@ const storage = multer.diskStorage({
 // On indique également ".single('image')" de s'attendre à un seul fichier pour le champ de formulaire nommé "image"
 module.exports = multer({storage: storage}).single('image');
 
-module.exports.resizeAndReplaceImage = (req, res, next) => {
-    // On vérifie si une image est dans la requête
-    if (!req.file) {
-        return res.status(400).json({ message: 'Ajouter une image est obligatoire !' });
-    }
+module.exports.validateCreateBookFields = (req, res, next) => {
+  const bookObject = JSON.parse(req.body.book);
 
-    // On initialise une constante qui comporte le corps de la requête du formulaire book
-    // On utilise JSON.parse() pour transformer les données JSON en objet JavaScript
-    const bookObject = JSON.parse(req.body.book);
+  if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre) {
+      if (req.file) {
+          // Si un champ est manquant, on supprime le fichier téléchargé s'il existe
+          fs.unlink(req.file.path, (err) => {
+              if (err) {
+                  console.log(err);
+              }
+              return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+          });
+      } else {
+          return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+      }
+  } else {
+      next();
+  }
+};
 
-    // Vérification si tous les champs obligatoires sont remplis
-    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
-        // Si un champ est manquant, on supprime le fichier téléchargé et on retourne une réponse d'erreur
-        fs.unlink(req.file.path, (err) => {
-            if (err) {
-                console.log(err);
-            }
-            return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
-        });
-    } else {
-        // Si tous les champs obligatoires sont remplis, procéder au redimensionnement de l'image
-        const filePath = req.file.path;
-        const fileName = req.file.filename;
-        const outputFilePath = path.join('images', `resized_${fileName}`);
+module.exports.processImage = (req, res, next) => {
+  if (req.file) {
+      const filePath = req.file.path;
+      const fileName = req.file.filename;
+      const outputFilePath = path.join('images', `resized_${fileName}`);
 
-        sharp(filePath)
-            .resize(206, 260)
-            .toFile(outputFilePath)
-            .then(() => {
-                fs.unlink(filePath, (err) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                    req.file.path = outputFilePath;
-                    next();
-                });
-            })
-            .catch(err => {
-                return next();
-            });
-    }
+      sharp(filePath)
+          .resize(206, 260)
+          .toFile(outputFilePath)
+          .then(() => {
+              fs.unlink(filePath, (err) => {
+                  if (err) {
+                      console.log(err);
+                  }
+                  req.file.path = outputFilePath;
+
+                  // Mettre à jour les données du livre dans req.body.book si nécessaire
+                  const bookObject = JSON.parse(req.body.book);
+                  bookObject.imageUrl = `${req.protocol}://${req.get('host')}/${outputFilePath}`;
+                  req.body.book = JSON.stringify(bookObject);
+
+                  next();
+              });
+          })
+          .catch(err => {
+              return next(err);
+          });
+  } else {
+      next();
+  }
 };
