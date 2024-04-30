@@ -32,7 +32,7 @@ module.exports = multer({storage: storage}).single('image');
 module.exports.resizeAndReplaceImage = (req, res, next) => {
     // On vérifie si l'image a été téléchargée
     if (!req.file) {
-      return next();
+      return res.status(400).json({ message: 'Ajouter une image est obligatoire !' });
     }
   
     // Chemin du fichier téléchargé

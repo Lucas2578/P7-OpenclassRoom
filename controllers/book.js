@@ -2,9 +2,14 @@ const Book = require('../models/Book');
 const fs = require('fs');
 
 exports.createBook = (req, res, next) => {
+
     // On initialise une constante qui comporte le corps de la requête du formulaire book
     // On utilise JSON.parse() pour transformer les données JSON en objet JavaScript
     const bookObject = JSON.parse(req.body.book);
+
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre) {
+        return res.status(400).json({ message: 'Tous les champs sont obligatoires !' });
+    }
 
     // On supprime le champ _id car MongoDB génère automatiquement un nouvel id unique pour chaque nouveau document
     delete bookObject._id;
@@ -12,7 +17,7 @@ exports.createBook = (req, res, next) => {
     // On enlève "_userId" pour éviter que quelqu'un change manuellement qui est le propriétaire du livre
     // On utilise les infos d'authentification pour savoir qui est l'utilisateur actuel
     delete bookObject._userId;
-    
+
     // On créer un nouvel objet de livre en utilisant bookObject
     const book = new Book({
         // Données ajoutées par l'utilisateur
@@ -27,7 +32,7 @@ exports.createBook = (req, res, next) => {
 
     book.save()
         .then(() => { res.status(201).json({ message: 'Objet enregistré !' })})
-        .catch(error => { console.log(error); res.status(400).json({ error })})
+        .catch(error => { res.status(400).json({ error })})
 }
 
 exports.getOneBook = (req, res, next) => {
