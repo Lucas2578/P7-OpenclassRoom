@@ -16,19 +16,26 @@ exports.signup = (req, res, next) => {
         return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 8 caractères !' });
     }
 
-    // On appelle la fonction pour hacher le MDP (ici on fait 10 tours de cryptage)
-    bcrypt.hash(req.body.password, 10)
-        // Promesse qui créer un utilisateur si réussie
-        .then(hash => {
-            // Constante avec le modèle User
-            const user = new User({
-                email: req.body.email,
-                password: hash
-            });
-            // On enregistre en base de donnée
-            user.save()
-                .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-                .catch(error => res.status(400).json({ error }));
+    // On recherche si l'email existe déjà en base de données
+    User.findOne({ email: req.body.email })
+        .then(existingUser => {
+            // Si l'email existe déjà, renvoie un message d'erreur
+            if (existingUser) {
+                return res.status(400).json({ message: 'Cette adresse e-mail est déjà utilisée !' });
+            }
+
+            // Si l'email n'existe pas, on procède à la création de l'utilisateur
+            bcrypt.hash(req.body.password, 10)
+                .then(hash => {
+                    const user = new User({
+                        email: req.body.email,
+                        password: hash
+                    });
+                    user.save()
+                        .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
+                        .catch(error => res.status(400).json({ error }));
+                })
+                .catch(error => res.status(500).json({ error }));
         })
         .catch(error => res.status(500).json({ error }));
 };
